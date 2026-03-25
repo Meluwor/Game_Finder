@@ -9,7 +9,7 @@ BASE_URL = "https://api.rawg.io/api"
 API_KEY = None  # im not sure if this is the way to go because im changing/setting it later/at start.
 KEY_NAME = 'RAWG_API_KEY'  # the name inside the .env file which stores the key
 # game_name Ymir  id= 44512
-GAME_NAME = "Ymir"  # could be any other available game_name
+#GAME_NAME = "Ymir"  # could be any other available game_name
 
 
 def prepare_and_check_api():
@@ -135,6 +135,8 @@ def main():
     print("is_available :", is_available, "    message: ", message)
     game_name = "Factorio"
     game_data = search_game_by_name(game_name)
+    #print(game_data)
+
 
     results = game_data["results"]
     for result in results:
@@ -146,7 +148,8 @@ def main():
             print("image_url: ", result["background_image"])
             print("short_screenshots: ", result["short_screenshots"])
             print("genres: ", result["genres"])
-            """
+
+"""
             slug
             name
             playtime
@@ -177,7 +180,7 @@ def main():
             short_screenshots
             parent_platforms
             genres
-            """
+"""
 
 
 if __name__ == "__main__":
