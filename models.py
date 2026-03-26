@@ -11,12 +11,12 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
 
-    games = db.relationship('UserGame', backref='user', lazy=True)
+    games = db.relationship('UserItem', backref='user', lazy=True)
 
-class Game(db.Model):
-    __tablename__ = "games"
+class Item(db.Model):
+    __tablename__ = "items"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    title = db.Column(db.String(100))
+    name = db.Column(db.String(100))
     release = db.Column(db.Integer)
     rating = db.Column(db.Float)
     genre_id = db.Column(db.Integer, db.ForeignKey('genres.id'), nullable=False)
@@ -27,14 +27,14 @@ class Genre(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
 
-    games = db.relationship('Game', backref='genre', lazy=True)
+    items = db.relationship('Item', backref='genre', lazy=True)
 
-class UserGame(db.Model):
-    __tablename__ = "user_games"
+class UserItem(db.Model):
+    __tablename__ = "user_items"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
+    game_id = db.Column(db.Integer, db.ForeignKey('items.id'), nullable=False)
 
-    game = db.relationship('Game', backref='owners')
+    game = db.relationship('Item', backref='owners')
 
 

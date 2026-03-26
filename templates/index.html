@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Users</h1>
+<ul class="user_list">
+    {% for user in users %}
+    <li class="user_entry">
+        <strong>{{ user.name }}</strong>
+        <br>
+        <a href="{{ url_for('show_items', user_id=user.id) }}" class="crud_btn">View ITEMS</a>
+    </li>
+    {% endfor %}
+</ul>
+<form action="{{ url_for('create_user') }}" method="POST">
+    <strong>Add New User</strong><br>
+    <input type="text" name="username" placeholder="name" required>
+    <input type="email" name="user_email" placeholder="e-mail" required>
+    <input type="password" name="user_pw" placeholder="password" required>
+    <button type="submit" class="crud_btn">Add</button>
+</form>
+
+
+{% endblock %}

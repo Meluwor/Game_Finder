@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('index') }}" class="back-link">← Main Menu</a>
+<h1>Items of {{user.name}}</h1>
+<div>
+    <ul class="item_list">
+        {% for link in items %}
+        <li class="items">
+            {% if link.item.poster_url and link.item.poster_url != 'N/A' %}
+            <img class="item_poster" src="{{ link.item.poster_url }}" alt="Poster for {{ link.custom_item}}">
+            {% else %}
+            <div class="item_poster_placeholder">No Image</div>
+            {% endif %}
+
+
+            <form action="{{ url_for('change_item_name',user_id=user.id, item_id=link.item.id)}}" method="POST">
+                <input type="text" name="title" value="{{ link.custom_item_name}}" required=""><br>
+                <button type="submit" class="crud_btn">Update</button>
+                <br>
+
+                <strong>Year:</strong>{{ link.item.year }}<br>
+                <strong>ITEM_name:</strong>{{ link.item.name }}<br>
+            </form>
+            <form action="{{ url_for('delete_item',user_id=user.id, item_id=link.item.id)}}" method="POST">
+                <button type="submit" class="crud_btn"
+                        onclick="return confirm(&#39;Delete this item?&#39;);">Delete
+                </button>
+            </form>
+        </li>
+
+        {% else %}
+        <li>You have nothing to list</li>
+        {% endfor %}
+    </ul>
+</div>
+<div class="">
+    <h2>Add ITEM</h2>
+    <form action="{{ url_for('add_item', user_id=user.id) }}" method="POST">
+        <input type="text" name="title" placeholder="ITEM title" required="">
+        <input type="text" name="year" placeholder="Year (optional)">
+        <button type="submit" class="crud_btn">Add ITEM</button>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,4 +1,4 @@
-from models import db,User, Game ,Genre,UserGame
+from models import db,User, Item ,Genre,UserItem
 
 
 
@@ -35,6 +35,11 @@ class DataManager:
         This method returns a user by given id.
         """
         return db.session.get(User,user_id)
+    def get_users(self):
+        """
+        This funktion returns a list of all users.
+        """
+        return User.query.all()
 
     def change_user_data(self,user_id,new_user_data):
         """
@@ -44,32 +49,44 @@ class DataManager:
             user = self.get_user(user_id)
             if not user:
                 return
-
+        #Todo something should be done here
         except Exception as e:
             db.session.rollback()
             print(f"Error: {e}")
-        pass
 
 
+    def get_items(self,user_id):
+        """
+        This method will get all items of a user.
+        """
+        try:
+            user = self.get_user(user_id)
+            if not user:
+                return []
+            return Item.query.filter_by(user_id=user_id).all()
+        except Exception as e:
+            print(f"Error: {e}")
+            return []
 
-    def create_game(self, game_data):
+
+    def create_item(self, item_data):
         """
-        This method creates a new game and stores it into database.
-        """
-        pass
-    def change_game_data(self,game_id,new_game_data):
-        """
-        This method shall ensure to change the game data like img-url, rating, etc.
+        This method creates a new item and stores it into database.
         """
         pass
-    def add_game_to_favorites(self,user_id,game_id):
+    def change_item_data(self,item_id,new_item_data):
         """
-        This method will allow a user to add a game to his favourites
+        This method shall ensure to change the item data like img-url, price, genre, rating, etc.
         """
         pass
-    def delete_game_from_favourites(self,user_id,game_id):
+    def add_item_to_favorites(self,user_id,item_id):
         """
-        This method deletes a game of a user.
+        This method will allow a user to add an item to his favourites
+        """
+        pass
+    def delete_item_from_favourites(self,user_id,item_id):
+        """
+        This method deletes an item of a user.
         """
         pass
     def create_genre(self):
