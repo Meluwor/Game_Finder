@@ -36,7 +36,7 @@
 <div class="">
     <h2>Add ITEM</h2>
     <form action="{{ url_for('add_item', user_id=user.id) }}" method="POST">
-        <input type="text" name="title" placeholder="ITEM title" required="">
+        <input type="text" name="name" placeholder="ITEM name" required="">
         <input type="text" name="year" placeholder="Year (optional)">
         <button type="submit" class="crud_btn">Add ITEM</button>
     </form>

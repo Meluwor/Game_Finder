@@ -11,11 +11,12 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
 
-    games = db.relationship('UserItem', backref='user', lazy=True)
+    items = db.relationship('UserItem', backref='user', lazy=True)
 
 class Item(db.Model):
     __tablename__ = "items"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     name = db.Column(db.String(100))
     release = db.Column(db.Integer)
     rating = db.Column(db.Float)
