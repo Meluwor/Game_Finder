@@ -30,11 +30,14 @@ class DataManager:
             db.session.rollback()
             print(f"Error: {e}")
 
+
     def get_user(self, user_id):
         """
         This method returns a user by given id.
         """
         return db.session.get(User,user_id)
+
+
     def get_users(self):
         """
         This funktion returns a list of all users.
@@ -69,10 +72,13 @@ class DataManager:
             return []
 
 
-    def create_item(self, item_data):
+    def create_item(self,user_id, item_data):
         """
         This method creates a new item and stores it into database.
         """
+
+
+
         pass
     def change_item_data(self,item_id,new_item_data):
         """

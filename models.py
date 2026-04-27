@@ -16,10 +16,15 @@ class User(db.Model):
 class Item(db.Model):
     __tablename__ = "items"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    name = db.Column(db.String(100))
-    release = db.Column(db.Integer)
+    rawg_game_id = db.Column(db.Integer)
+    game_name = db.Column(db.String(200))
+    release = db.Column(db.String(50))
     rating = db.Column(db.Float)
+    background_image_url = db.Column(db.String(500))
+
+
+    # Link item to User  in this case it is the creator of the database entry
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     genre_id = db.Column(db.Integer, db.ForeignKey('genres.id'), nullable=False)
 
 
@@ -34,8 +39,8 @@ class UserItem(db.Model):
     __tablename__ = "user_items"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    game_id = db.Column(db.Integer, db.ForeignKey('items.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('items.id'), nullable=False)
 
-    game = db.relationship('Item', backref='owners')
+    item = db.relationship('Item', backref='owners')
 
 

@@ -185,3 +185,59 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+"""
+
+{
+  "id": 10926,
+  "slug": "factorio",
+  "name": "Factorio",
+  "released": "2020-08-14",
+  "tba": false,
+  "playtime": 20,
+  "metacritic": 83,
+  "rating": 4.36,
+  "rating_top": 5,
+  "background_image": "https://rawg.io",
+  "platforms": [
+    { "platform": { "id": 4, "name": "PC", "slug": "pc" } },
+    { "platform": { "id": 7, "name": "Nintendo Switch", "slug": "nintendo-switch" } },
+    { "platform": { "id": 5, "name": "macOS", "slug": "macos" } },
+    { "platform": { "id": 6, "name": "Linux", "slug": "linux" } }
+  ],
+  "stores": [
+    { "store": { "id": 1, "name": "Steam", "slug": "steam" } },
+    { "store": { "id": 5, "name": "GOG", "slug": "gog" } },
+    { "store": { "id": 6, "name": "Nintendo Store", "slug": "nintendo" } }
+  ],
+  "ratings": [
+    { "id": 5, "title": "exceptional", "count": 502, "percent": 61.37 },
+    { "id": 4, "title": "recommended", "count": 209, "percent": 25.55 },
+    { "id": 3, "title": "meh", "count": 57, "percent": 6.97 },
+    { "id": 1, "title": "skip", "count": 50, "percent": 6.11 }
+  ],
+  "added_by_status": {
+    "yet": 126,
+    "owned": 2400,
+    "beaten": 321,
+    "toplay": 224,
+    "dropped": 386,
+    "playing": 167
+  },
+  "tags": [
+    { "id": 31, "name": "Singleplayer", "slug": "singleplayer" },
+    { "id": 7, "name": "Multiplayer", "slug": "multiplayer" },
+    { "id": 18, "name": "Co-op", "slug": "co-op" },
+    { "id": 36, "name": "Open World", "slug": "open-world" },
+    { "id": 32, "name": "Sci-fi", "slug": "sci-fi" },
+    { "id": 37, "name": "Sandbox", "slug": "sandbox" },
+    { "id": 1, "name": "Survival", "slug": "survival" },
+    { "id": 62, "name": "Moddable", "slug": "moddable" },
+    { "id": 125, "name": "Crafting", "slug": "crafting" },
+    { "id": 67, "name": "Management", "slug": "management" },
+    { "id": 180, "name": "Base Building", "slug": "base-building" }
+  ],
+  "updated": "2026-03-13T22:10:29"
+}
+"""
