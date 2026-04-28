@@ -4,3 +4,10 @@ flask_sqlalchemy
 jinja2
 python-dotenv
 openai
+
+
+langgraph
+langchain
+langchain-openai
+tavily-python
+langchain-tavily
