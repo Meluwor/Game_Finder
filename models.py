@@ -25,15 +25,16 @@ class Item(db.Model):
 
     # Link item to User  in this case it is the creator of the database entry
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    genre_id = db.Column(db.Integer, db.ForeignKey('genres.id'), nullable=False)
+    #link genres to item
+    genres = db.relationship('Genre', secondary="item_genres", backref='items')
 
 
 class Genre(db.Model):
     __tablename__ = "genres"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
+    rawg_genre_id = db.Column(db.Integer)
 
-    items = db.relationship('Item', backref='genre', lazy=True)
 
 class UserItem(db.Model):
     __tablename__ = "user_items"
@@ -43,4 +44,8 @@ class UserItem(db.Model):
 
     item = db.relationship('Item', backref='owners')
 
+class ItemGenre(db.Model):
+    __tablename__ = 'item_genres'
+    item_id = db.Column(db.Integer, db.ForeignKey('items.id'), primary_key=True)
+    genre_id = db.Column(db.Integer, db.ForeignKey('genres.id'), primary_key=True)
 

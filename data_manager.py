@@ -66,20 +66,44 @@ class DataManager:
             user = self.get_user(user_id)
             if not user:
                 return []
-            return Item.query.filter_by(user_id=user_id).all()
+            user_items = UserItem.query.filter_by(user_id=user_id).all()
+            return [link.item for link in user_items]
         except Exception as e:
             print(f"Error: {e}")
             return []
 
 
-    def create_item(self,user_id, item_data):
+    def create_item(self,user_id, item_data,genre_data):
         """
         This method creates a new item and stores it into database.
         """
 
 
+        new_item = Item(
+            user_id=user_id,
+            rawg_game_id=item_data.get('rawg_game_id'),
+            game_name=item_data.get('name'),
+            release=item_data.get('release'),
+            rating=item_data.get('rating'),
+            background_image_url=item_data.get('background_image_url')
+        )
+        for genre in genre_data:
+            genre_name= genre["name"]
+            new_genre = Genre.query.filter_by(name=genre_name).first()
+            if not new_genre:
+                new_genre = Genre(name=genre['name'], rawg_genre_id=genre['id'])
+                db.session.add(new_genre)
+            new_item.genres.append(new_genre)
 
-        pass
+        db.session.add(new_item)
+        db.session.commit()
+
+        user_item = UserItem(user_id=user_id, item_id=new_item.id)
+        db.session.add(user_item)
+        db.session.commit()
+
+        return new_item
+
     def change_item_data(self,item_id,new_item_data):
         """
         This method shall ensure to change the item data like img-url, price, genre, rating, etc.
@@ -94,7 +118,11 @@ class DataManager:
         """
         This method deletes an item of a user.
         """
-        pass
+        user_item = UserItem.query.filter_by(user_id=user_id,item_id=item_id).first()
+        if user_item:
+            db.session.delete(user_item)
+            db.session.commit()
+
     def create_genre(self):
         """
         This method will add a new genre.

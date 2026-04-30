@@ -27,7 +27,7 @@ tavily = TavilySearch(
 
 model = ChatOpenAI(
     temperature=0,
-    model = "gpt-4o-mini",
+    model = "gpt-5-mini",
     api_key=OPEN_AI_KEY
 )
 

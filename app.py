@@ -3,7 +3,7 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, abort, flash
 
 import RAWG_API as RAWG_API
-import open_ai as AI
+import open_ai_basic as AI
 from data_manager import DataManager
 from models import db
 
@@ -87,7 +87,7 @@ def add_item(user_id):
     rawg_game_id = first_result["id"]
     game_name = first_result["name"]
     game_release = first_result["released"]
-    rating = first_result.get("rating"),
+    rating = first_result.get("rating")
 
 
     item_data = {
@@ -102,18 +102,28 @@ def add_item(user_id):
     print("background_image_url: ", background_image_url)
     print("first_result ", first_result)
     print("genres", first_result.get("genres"))
-    new_item = data_manager.create_item(user_id,item_data)
+    genre_data = first_result.get("genres",[])
+    data_manager.create_item(user_id,item_data,genre_data)
 
     return redirect(url_for('show_items', user_id=user_id))
 
-@app.route("/delete_item/<int:user_id>", methods=["POST"])
+@app.route("/delete_item/<int:user_id>/<int:item_id>", methods=["POST"])
 def delete_item(user_id, item_id):
-
-
-    print(f"deleting item{item_id} from user {user_id}")
-    return
-
+    """
+    This route will delete an item.
+    """
+    print(f"deleting item_id: {item_id} from user: {user_id}")
     data_manager.delete_item_from_favourites(user_id,item_id)
+    return redirect(url_for('show_items', user_id=user_id))
+
+@app.route("/change_item_name/<int:user_id>/<int:item_id>",methods=["POST"])
+def change_item_name(user_id,item_id):
+    """
+    This route will allow a user to rename his item.
+    """
+    new_name = request.form.get("title")
+    print("changing name to : ",new_name)
+    return redirect(url_for('show_items', user_id=user_id))
 
 
 if __name__ == '__main__':
