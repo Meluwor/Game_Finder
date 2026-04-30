@@ -103,7 +103,8 @@ def add_item(user_id):
     print("first_result ", first_result)
     print("genres", first_result.get("genres"))
     genre_data = first_result.get("genres",[])
-    data_manager.create_item(user_id,item_data,genre_data)
+
+    success = data_manager.create_item(user_id,item_data,genre_data)
 
     return redirect(url_for('show_items', user_id=user_id))
 
@@ -122,7 +123,10 @@ def change_item_name(user_id,item_id):
     This route will allow a user to rename his item.
     """
     new_name = request.form.get("title")
-    print("changing name to : ",new_name)
+
+    data_manager.change_item_data(item_id,new_name)
+    #print("changing name to : ",new_name)
+
     return redirect(url_for('show_items', user_id=user_id))
 
 

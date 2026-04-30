@@ -14,12 +14,12 @@
 
 
             <form action="{{ url_for('change_item_name',user_id=user.id, item_id=item.id)}}" method="POST">
-                <input type="text" name="title" value="{{ item.name}}" required=""><br>
+                <input type="text" name="title" value="{{ item.game_name}}" required=""><br>
                 <button type="submit" class="crud_btn">Update</button>
                 <br>
 
-                <strong>Year:</strong>{{ item.year }}<br>
-                <strong>ITEM_name:</strong>{{ item.name }}<br>
+                <strong>Year:</strong>{{ item.release }}<br>
+                <strong>ITEM_name:</strong>{{ item.game_name }}<br>
             </form>
             <form action="{{ url_for('delete_item',user_id=user.id, item_id=item.id)}}" method="POST">
                 <button type="submit" class="crud_btn"
