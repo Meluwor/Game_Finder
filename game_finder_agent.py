@@ -6,12 +6,15 @@ from dotenv import load_dotenv
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from langchain_tavily import TavilySearch
+#from langchain_tavily import TavilySearch
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.checkpoint.memory import MemorySaver
+
 
 load_dotenv()
 
+MAX_AGENT_CALLS = 10
 OPEN_AI_KEY = os.getenv("OPENAI_GTP_KEY")
 
 """
@@ -34,27 +37,29 @@ model = ChatOpenAI(
 )
 
 
-# TODO hier sollte die RAWG-API mit rein
+
 
 @tool
 def call_me_allways():
     """
     This function has all needed knowledge of the database.
     """
+    # TODO llm greift darauf zu mal schaun wie weit
     print("<<<<<<<<<i got a call>>>>>>>>>")
     return "never call me again"
 
 
 @tool
-def conect_to_RAWG():
+def connect_to_rawg():
     """
     This function will allow the LLM to get specific game data via the RAWG-API
     """
+    # TODO hier sollte die RAWG-API mit rein
     print("<<<<<<<<<RAWG-CALL>>>>>>>>>")
     return "calling API"
 
 
-tools = [call_me_allways, conect_to_RAWG]
+tools = [call_me_allways, connect_to_rawg]
 
 model_with_tools = model.bind_tools(tools)
 
@@ -90,14 +95,23 @@ work_flow.add_conditional_edges(
     }
 
 )
-
-app = work_flow.compile()
+#RAM based memori
+memory = MemorySaver()
+app = work_flow.compile(checkpointer=memory)
 
 
 def start():
-    system_start_content = "Du bist ein Spieleberater der mit Hilfe seiner Tools über die Game-Finder app wacht. Deine Hauptaufgabe besteht darin dem user nur! in Bezug auf Spiele zu beraten"
-
+    #TODO die id sollte angepasst werden
+    config = {"configurable": {"thread_id": "lokaler_test_thread"}}
+    system_start_content = ("Du bist ein Spieleberater der mit Hilfe seiner Tools über die Game-Finder app wacht. "
+                            "Deine Hauptaufgabe besteht darin dem user nur! in Bezug auf Spiele zu beraten")
+    calls = 0
     while True:
+        if calls == MAX_AGENT_CALLS:
+            print("end of calls")
+            break
+            #TODO ne userinfo wäre angebracht
+        calls += 1
         # TODO mal schaun wofür das noch gut ist
         user_prompt = input("What you searching for: ").strip()
         if not user_prompt:
@@ -110,7 +124,7 @@ def start():
                          HumanMessage(content=user_prompt)
                          ]
         }
-        for output in app.stream(initial_state):
+        for output in app.stream(initial_state, config=config):
             for key, value in output.items():
                 print(f"Output from node: {key}")
                 for message in value["messages"]:
