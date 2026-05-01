@@ -20,7 +20,8 @@ db.init_app(app)  # Link the database and the app. This is the reason you need t
 
 data_manager = DataManager()  # Create an object of your DataManager class
 
-#TODO routen fehlen noch die ein oder andere
+
+# TODO routen fehlen noch die ein oder andere
 
 @app.route('/')
 @app.route('/index')
@@ -37,7 +38,7 @@ def create_user():
     username = request.form.get('username')
     user_email = request.form.get('user_email')
     user_pw = request.form.get('user_pw')
-    data_manager.create_user(username=username,user_email=user_email,user_pw=user_pw)
+    data_manager.create_user(username=username, user_email=user_email, user_pw=user_pw)
     return render_template('index.html', users=data_manager.get_users())
 
 
@@ -69,7 +70,7 @@ def add_item(user_id):
         flash("User not found!")
         return redirect(url_for('index'))
 
-    #Todo hier sollte RAWG/openAI ins spiel kommen
+    # Todo hier sollte RAWG/openAI ins spiel kommen
 
     game_data_from_api = RAWG_API.search_game_by_name(game_name_from_user)
 
@@ -77,7 +78,7 @@ def add_item(user_id):
         flash(f"There are no results by given name '{game_name_from_user}'.")
         return redirect(url_for('show_items', user_id=user_id))
 
-    #TODO hier muss noch einiges gemacht werden
+    # TODO hier muss noch einiges gemacht werden
     AI.check_data(game_data_from_api)
 
     first_result = game_data_from_api["results"][0]
@@ -88,7 +89,6 @@ def add_item(user_id):
     game_name = first_result["name"]
     game_release = first_result["released"]
     rating = first_result.get("rating")
-
 
     item_data = {
         'user_id': user_id,
@@ -102,11 +102,12 @@ def add_item(user_id):
     print("background_image_url: ", background_image_url)
     print("first_result ", first_result)
     print("genres", first_result.get("genres"))
-    genre_data = first_result.get("genres",[])
+    genre_data = first_result.get("genres", [])
 
-    success = data_manager.create_item(user_id,item_data,genre_data)
+    success = data_manager.create_item(user_id, item_data, genre_data)
 
     return redirect(url_for('show_items', user_id=user_id))
+
 
 @app.route("/delete_item/<int:user_id>/<int:item_id>", methods=["POST"])
 def delete_item(user_id, item_id):
@@ -114,24 +115,25 @@ def delete_item(user_id, item_id):
     This route will delete an item.
     """
     print(f"deleting item_id: {item_id} from user: {user_id}")
-    data_manager.delete_item_from_favourites(user_id,item_id)
+    data_manager.delete_item_from_favourites(user_id, item_id)
     return redirect(url_for('show_items', user_id=user_id))
 
-@app.route("/change_item_name/<int:user_id>/<int:item_id>",methods=["POST"])
-def change_item_name(user_id,item_id):
+
+@app.route("/change_item_name/<int:user_id>/<int:item_id>", methods=["POST"])
+def change_item_name(user_id, item_id):
     """
     This route will allow a user to rename his item.
     """
     new_name = request.form.get("title")
 
-    data_manager.change_item_data(item_id,new_name)
-    #print("changing name to : ",new_name)
+    data_manager.change_item_data(item_id, new_name)
+    # print("changing name to : ",new_name)
 
     return redirect(url_for('show_items', user_id=user_id))
 
 
 if __name__ == '__main__':
-    #Readme: You have to activate this on first start to generate the Database. After you should/can deactivate it again.
+    # Readme: You have to activate this on first start to generate the Database. After you should/can deactivate it again.
     with app.app_context():
         db.create_all()
 
