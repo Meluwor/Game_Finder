@@ -10,7 +10,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
-
+from langchain_core.runnables import RunnableConfig
 
 load_dotenv()
 
@@ -42,7 +42,7 @@ model = ChatOpenAI(
 @tool
 def call_me_allways():
     """
-    This function has all needed knowledge of the database.
+    This function has all needed knowledge of this user based on database.
     """
     # TODO llm greift darauf zu mal schaun wie weit
     print("<<<<<<<<<i got a call>>>>>>>>>")
@@ -54,6 +54,7 @@ def connect_to_rawg():
     """
     This function will allow the LLM to get specific game data via the RAWG-API
     """
+    
     # TODO hier sollte die RAWG-API mit rein
     print("<<<<<<<<<RAWG-CALL>>>>>>>>>")
     return "calling API"
@@ -66,7 +67,7 @@ model_with_tools = model.bind_tools(tools)
 
 # in this class all needed info will be passed to the next node
 class AgentState(TypedDict):
-    # Basemessage: System,User,Agent
+    # BaseMessage: System,User,Agent
     messages: Annotated[Sequence[BaseMessage], operator.add]
 
 
@@ -102,34 +103,55 @@ app = work_flow.compile(checkpointer=memory)
 
 def start():
     #TODO die id sollte angepasst werden
-    config = {"configurable": {"thread_id": "lokaler_test_thread"}}
+    config: RunnableConfig = {"configurable": {"thread_id": "lokaler_test_thread"}}
     system_start_content = ("Du bist ein Spieleberater der mit Hilfe seiner Tools über die Game-Finder app wacht. "
                             "Deine Hauptaufgabe besteht darin dem user nur! in Bezug auf Spiele zu beraten")
+
+    start_state = app.get_state(config)
+    if not start_state.values.get("messages"):
+        app.update_state(config, {"messages": [SystemMessage(content=system_start_content)]})
+
+
     calls = 0
     while True:
         if calls == MAX_AGENT_CALLS:
+            #TODO hier muss man mal schaun zwecks Token Überwachung
             print("end of calls")
             break
             #TODO ne userinfo wäre angebracht
         calls += 1
-        # TODO mal schaun wofür das noch gut ist
         user_prompt = input("What you searching for: ").strip()
         if not user_prompt:
             continue
         if user_prompt in ["x", "y", "z"]:
             print("Program finished.")
             break
-        initial_state = {
-            "messages": [SystemMessage(content=system_start_content),
-                         HumanMessage(content=user_prompt)
-                         ]
-        }
+        initial_state = {"messages": [HumanMessage(content=user_prompt)]}
+
         for output in app.stream(initial_state, config=config):
             for key, value in output.items():
                 print(f"Output from node: {key}")
                 for message in value["messages"]:
                     message.pretty_print()
                 print("------")
+
+def chat_bot(user_id,user_content):
+    config: RunnableConfig = {"configurable": {"thread_id": user_id}}
+    system_start_content = ("Du bist ein Spieleberater der mit Hilfe seiner Tools über die Game-Finder app wacht. "
+                            "Deine Hauptaufgabe besteht darin dem user nur! in Bezug auf Spiele zu beraten")
+
+    start_state = app.get_state(config)
+    if not start_state.values.get("messages"):
+        app.update_state(config, {"messages": [SystemMessage(content=system_start_content)]})
+
+    initial_state = {"messages": [HumanMessage(content=user_content)]}
+
+    for output in app.stream(initial_state, config=config):
+        for key, value in output.items():
+            print(f"Output from node: {key}")
+            for message in value["messages"]:
+                message.pretty_print()
+            print("------")
 
 
 def main():

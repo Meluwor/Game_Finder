@@ -16,11 +16,12 @@ class User(db.Model):
 class Item(db.Model):
     __tablename__ = "items"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    rawg_game_id = db.Column(db.Integer)
+    rawg_game_id = db.Column(db.String(50))
     game_name = db.Column(db.String(200))
     release = db.Column(db.String(50))
     rating = db.Column(db.Float)
     background_image_url = db.Column(db.String(500))
+    summary = db.Column(db.String(1000))
 
     # Link item to User  in this case it is the creator of the database entry
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)

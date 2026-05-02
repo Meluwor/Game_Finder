@@ -1,13 +1,16 @@
+# --- Web Framework & Server ---
 flask
-sqlalchemy
-flask_sqlalchemy
 jinja2
 python-dotenv
+
+# --- Database & ORM ---
+sqlalchemy
+flask_sqlalchemy
+
+# --- AI & LangChain Ecosystem ---
 openai
-
-
-langgraph
+pydantic
 langchain
+langchain-core
 langchain-openai
-tavily-python
-langchain-tavily
+langgraph
