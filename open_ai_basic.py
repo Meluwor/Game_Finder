@@ -2,7 +2,7 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 import json
-from structured_output import StructuredOutput as SO
+import game_finder_agent
 
 load_dotenv()
 
@@ -22,7 +22,7 @@ möglicher ouutput:
 datatype:  <class 'dict'>
 """
 
-RESPONSE_FORMAT = {"type": "json_object"}  # erzwingt JSON-Ausgabe
+RESPONSE_FORMAT = "StructuredOutput"
 
 
 
@@ -41,3 +41,10 @@ def check_data(data):
     This function shall ensure that the user will get game data not something else.
     """
     pass
+
+
+def search_for(user_id,user_content):
+    print(f"searched for user_id_{user_id} : {user_content}")
+    answer=game_finder_agent.chat_bot(user_id,user_content)
+    #answer = "no answer"
+    return answer

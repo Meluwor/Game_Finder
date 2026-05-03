@@ -55,6 +55,23 @@ def show_items(user_id):
         return render_template('items.html', user=user, items=items)
     abort(404, description=f"There is no user by given id:{user_id}.")
 
+@app.route("/search_item/<int:user_id>")
+def search_item(user_id):
+    user = data_manager.get_user(user_id)
+
+    if not user:
+        print("You are not welcome!")
+        flash("User not found!")
+        return redirect(url_for('index'))
+    search_for = request.args.get("name").strip()
+    answer="You searched for nothing!"
+    if search_for:
+        answer=AI.search_for(user_id,search_for)
+    print("searching for: ",search_for)
+    print("route_answer:",answer)
+    flash(answer)
+    return redirect(url_for("show_items", user_id=user_id))
+
 
 @app.route("/add_item/<int:user_id>", methods=["POST"])
 def add_item(user_id):
@@ -90,13 +107,16 @@ def add_item(user_id):
     game_release = first_result["released"]
     rating = first_result.get("rating")
 
+    #TODO das muss gemacht werden
+    summary= "zZ nur zum testen"
     item_data = {
         'user_id': user_id,
         'rawg_game_id': rawg_game_id,
         'name': game_name,
         'release': game_release,
         'rating': rating,
-        'background_image_url': background_image_url
+        'background_image_url': background_image_url,
+        'summary':summary
     }
     print("item_data: ", item_data)
     print("background_image_url: ", background_image_url)

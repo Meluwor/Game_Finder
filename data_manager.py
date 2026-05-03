@@ -83,7 +83,9 @@ class DataManager:
                 game_name=item_data.get('name'),
                 release=item_data.get('release'),
                 rating=item_data.get('rating'),
-                background_image_url=item_data.get('background_image_url')
+                background_image_url=item_data.get('background_image_url'),
+                summary = item_data.get('summary')
+
             )
 
             db.session.add(new_item)

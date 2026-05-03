@@ -3,33 +3,21 @@ import os
 from typing import TypedDict, Sequence, Annotated
 
 from dotenv import load_dotenv
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-#from langchain_tavily import TavilySearch
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.runnables import RunnableConfig
+
+from Game_Finder.structured_output import ItemList
 
 load_dotenv()
 
 MAX_AGENT_CALLS = 10
 OPEN_AI_KEY = os.getenv("OPENAI_GTP_KEY")
 
-"""
-Tavily  wäre ein web tool
-"""
-"""
-#Todo Tavily acc wäre super
-TAVILY_KEY = os.getenv("TAVILY_KEY")
-
-
-tavily = TavilySearch(
-    max_results=5,
-    tavily_api_key=TAVILY_KEY
-)
-"""
 model = ChatOpenAI(
     temperature=0,
     model="gpt-4o-mini",
@@ -72,10 +60,22 @@ class AgentState(TypedDict):
 
 
 def call_model(state: AgentState):
+    """
+
+    """
     print("Calling Model")
     messages = state["messages"]
     response = model_with_tools.invoke(messages)
     return {"messages": [response]}
+
+
+structured_llm = model.with_structured_output(ItemList)
+def format_output(state:AgentState):
+    print("checking output")
+
+    messages = state["messages"]
+    response = structured_llm.invoke(messages)
+    return {"messages": [AIMessage(content=response.json())]}
 
 
 work_flow = StateGraph(AgentState)
@@ -83,6 +83,7 @@ tool_node = ToolNode(tools)
 
 work_flow.add_node("tool", tool_node)
 work_flow.add_node("core", call_model)
+work_flow.add_node("formatter", format_output)
 
 work_flow.add_edge("tool", "core")
 work_flow.set_entry_point("core")
@@ -92,10 +93,12 @@ work_flow.add_conditional_edges(
     tools_condition,
     {
         "tools": "tool",
-        "__end__": END
+        "__end__": "formatter"
     }
 
 )
+work_flow.add_edge("formatter", END)
+
 #RAM based memori
 memory = MemorySaver()
 app = work_flow.compile(checkpointer=memory)
@@ -145,14 +148,18 @@ def chat_bot(user_id,user_content):
         app.update_state(config, {"messages": [SystemMessage(content=system_start_content)]})
 
     initial_state = {"messages": [HumanMessage(content=user_content)]}
-
+    answer= ""
     for output in app.stream(initial_state, config=config):
         for key, value in output.items():
             print(f"Output from node: {key}")
             for message in value["messages"]:
+                last_message = value["messages"][-1]
+                answer = last_message.content
                 message.pretty_print()
+
             print("------")
 
+    return answer
 
 def main():
     print("start")
