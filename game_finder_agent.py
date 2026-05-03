@@ -18,7 +18,12 @@ load_dotenv()
 MAX_AGENT_CALLS = 10
 OPEN_AI_KEY = os.getenv("OPENAI_GTP_KEY")
 
-model = ChatOpenAI(
+model_for_core = ChatOpenAI(
+    temperature=0,
+    model="gpt-4o-mini",
+    api_key=OPEN_AI_KEY
+)
+model_for_structured_output = ChatOpenAI(
     temperature=0,
     model="gpt-4o-mini",
     api_key=OPEN_AI_KEY
@@ -50,7 +55,7 @@ def connect_to_rawg():
 
 tools = [call_me_allways, connect_to_rawg]
 
-model_with_tools = model.bind_tools(tools)
+model_with_tools = model_for_core.bind_tools(tools)
 
 
 # in this class all needed info will be passed to the next node
@@ -69,12 +74,20 @@ def call_model(state: AgentState):
     return {"messages": [response]}
 
 
-structured_llm = model.with_structured_output(ItemList)
+structured_llm = model_for_structured_output.with_structured_output(ItemList)
 def format_output(state:AgentState):
+    """
+    This node will format the given input to a structured one with the halp off a LLM.
+    """
     print("checking output")
-
+    prompt = SystemMessage(content=(
+        "Fasse die Informationen zusammen. Nutze die letzte Antwort des Beraters "
+        "für das Feld 'answer_to_user' und extrahiere die Spieldaten für 'items'."
+    ))
     messages = state["messages"]
-    response = structured_llm.invoke(messages)
+    response = structured_llm.invoke([prompt] + messages)
+    print("output generated")
+    #Todo speichere hier core antwort und formatter antwort
     return {"messages": [AIMessage(content=response.json())]}
 
 
@@ -104,7 +117,32 @@ memory = MemorySaver()
 app = work_flow.compile(checkpointer=memory)
 
 
-def start():
+def chat_bot(user_id,user_content):
+    config: RunnableConfig = {"configurable": {"thread_id": user_id}}
+    system_start_content = ("Du bist ein Spieleberater der mit Hilfe seiner Tools über die Game-Finder app wacht und Lügst nicht. "
+                            "Deine Hauptaufgabe besteht darin dem user nur! in Bezug auf Spiele zu beraten und du hast auch immer eines parat")
+
+    start_state = app.get_state(config)
+    if not start_state.values.get("messages"):
+        app.update_state(config, {"messages": [SystemMessage(content=system_start_content)]})
+
+    initial_state = {"messages": [HumanMessage(content=user_content)]}
+    answer= ""
+    for output in app.stream(initial_state, config=config):
+        for key, value in output.items():
+            print(f"Output from node: {key}")
+            for message in value["messages"]:
+                last_message = value["messages"][-1]
+                answer = last_message.content
+                message.pretty_print()
+            print("------")
+
+    return answer
+
+
+
+
+def start_for_testing():
     #TODO die id sollte angepasst werden
     config: RunnableConfig = {"configurable": {"thread_id": "lokaler_test_thread"}}
     system_start_content = ("Du bist ein Spieleberater der mit Hilfe seiner Tools über die Game-Finder app wacht. "
@@ -138,32 +176,10 @@ def start():
                     message.pretty_print()
                 print("------")
 
-def chat_bot(user_id,user_content):
-    config: RunnableConfig = {"configurable": {"thread_id": user_id}}
-    system_start_content = ("Du bist ein Spieleberater der mit Hilfe seiner Tools über die Game-Finder app wacht. "
-                            "Deine Hauptaufgabe besteht darin dem user nur! in Bezug auf Spiele zu beraten")
-
-    start_state = app.get_state(config)
-    if not start_state.values.get("messages"):
-        app.update_state(config, {"messages": [SystemMessage(content=system_start_content)]})
-
-    initial_state = {"messages": [HumanMessage(content=user_content)]}
-    answer= ""
-    for output in app.stream(initial_state, config=config):
-        for key, value in output.items():
-            print(f"Output from node: {key}")
-            for message in value["messages"]:
-                last_message = value["messages"][-1]
-                answer = last_message.content
-                message.pretty_print()
-
-            print("------")
-
-    return answer
 
 def main():
     print("start")
-    start()
+    start_for_testing()
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+import json
 import os
 
 from flask import Flask, render_template, request, redirect, url_for, abort, flash
@@ -66,9 +67,24 @@ def search_item(user_id):
     search_for = request.args.get("name").strip()
     answer="You searched for nothing!"
     if search_for:
+        #a long string in JSON-Format
         answer=AI.search_for(user_id,search_for)
+        if answer:
+            answer= json.loads(answer)
+            wanted_items = answer["wanted_items"]
+            user_want_this=answer["user_want_this"]
+            user_want_to_add=answer["user_want_to_add"]
+            if wanted_items and user_want_to_add or wanted_items and user_want_this:
+                list_of_items=data_manager.transform_data(user_id,wanted_items)
+                for item in list_of_items:
+                    item_data, genre_data = item
+                    data_manager.create_item(user_id,item_data,genre_data)
+                print("wanted_items",wanted_items)
     print("searching for: ",search_for)
+    print("answer type", type(answer))
     print("route_answer:",answer)
+
+    #flash(answer.get("answer_to_user", "Suche abgeschlossen!"))
     flash(answer)
     return redirect(url_for("show_items", user_id=user_id))
 

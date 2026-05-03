@@ -155,3 +155,29 @@ class DataManager:
         This method checks if a given item exists already.
         """
         return Item.query.filter_by(rawg_game_id=rawg_game_id).first()
+
+    def transform_data(self,user_id, wanted_items):
+        """
+        This method will handle the given data from the LLM to fit the database shema.
+        """
+        print("-----transforming data----")
+        list_of_items=[]
+
+        for item in wanted_items:
+            item_data = {
+                'user_id': user_id,
+                'rawg_game_id': item["rawg_game_id"],
+                'name': item["item_name"],
+                'release': item["release"],
+                'rating': item["rating"],
+                'background_image_url': item["background_image_url"],
+                'summary': item["summary"]
+            }
+            genre_data=[]
+            for genre in item["genre"]:
+                genre_data.append({"name":genre,
+                                   "id":"test}"})
+
+            list_of_items.append((item_data,genre_data))
+        print("-----finished transforming----")
+        return list_of_items
