@@ -42,6 +42,9 @@ class UserItem(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     item_id = db.Column(db.Integer, db.ForeignKey('items.id'), nullable=False)
 
+    # this name could be the original or a user defined one
+    custom_item_name = db.Column(db.String(100))
+
     item = db.relationship('Item', backref='owners')
 
 

@@ -1,3 +1,5 @@
+from sqlalchemy import exists
+
 from models import db, User, Item, Genre, UserItem
 
 
@@ -54,7 +56,7 @@ class DataManager:
             db.session.rollback()
             print(f"Error: {e}")
 
-    def get_items(self, user_id):
+    def get_user_items(self, user_id):
         """
         This method will get all items of a user.
         """
@@ -63,7 +65,7 @@ class DataManager:
             if not user:
                 return []
             user_items = UserItem.query.filter_by(user_id=user_id).all()
-            return [link.item for link in user_items]
+            return user_items
         except Exception as e:
             print(f"Error: {e}")
             return []
@@ -73,14 +75,14 @@ class DataManager:
         This method creates a new item and stores it into database.
         """
 
-        rawg_game_id = item_data.get('rawg_game_id')
+        item_name=item_data.get('name')
 
-        new_item = self.does_this_item_exist(rawg_game_id)
+        new_item = self.does_this_item_exist(item_name)
         if not new_item:
             new_item = Item(
                 user_id=user_id,
-                rawg_game_id=rawg_game_id,
-                game_name=item_data.get('name'),
+                rawg_game_id=item_data.get('rawg_game_id'),
+                game_name=item_name,
                 release=item_data.get('release'),
                 rating=item_data.get('rating'),
                 background_image_url=item_data.get('background_image_url'),
@@ -104,7 +106,7 @@ class DataManager:
         if already_linked:
             return False
 
-        user_item = UserItem(user_id=user_id, item_id=new_item.id)
+        user_item = UserItem(user_id=user_id, item_id=new_item.id,custom_item_name=item_name)
         db.session.add(user_item)
         try:
             db.session.commit()
@@ -114,17 +116,20 @@ class DataManager:
             print(f"Update-Fehler: {e}")
             return False
 
-    def change_item_data(self, item_id, new_name):
+    def change_personal_item_data(self, user_id,item_id, new_name):
         """
-        This method shall ensure to change the item data like img-url, price, genre, rating, etc.
+        This method shall ensure to change the item data like name img-url, price, genre, rating, etc. ATM just the name.
         """
-        item = Item.query.get(item_id)
-        new_name = new_name.strip()
-        if not item:
+        user_item = UserItem.query.filter_by(
+            user_id=user_id,
+            item_id=item_id
+        ).first()
+        if not user_item:
             return False
-        if item.game_name == new_name:
+        if user_item.custom_item_name == new_name:
+            #no changes
             return False
-        item.game_name = new_name
+        user_item.custom_item_name = new_name
         try:
             db.session.commit()
             return True
@@ -150,11 +155,12 @@ class DataManager:
 
         pass
 
-    def does_this_item_exist(self, rawg_game_id):
+    def does_this_item_exist(self, item_name):
         """
         This method checks if a given item exists already.
         """
-        return Item.query.filter_by(rawg_game_id=rawg_game_id).first()
+        #TODO eine id wäre hier besser
+        return Item.query.filter_by(game_name=item_name).first()
 
     def transform_data(self,user_id, wanted_items):
         """

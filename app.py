@@ -3,7 +3,7 @@ import os
 
 from flask import Flask, render_template, request, redirect, url_for, abort, flash
 
-import RAWG_API as RAWG_API
+import RAWG_API
 import open_ai_basic as AI
 from data_manager import DataManager
 from models import db
@@ -50,7 +50,7 @@ def show_items(user_id):
     """
     user = data_manager.get_user(user_id)
     if user:
-        items = data_manager.get_items(user_id)
+        items = data_manager.get_user_items(user_id)
         if not items:
             print("User has no items atm.")
         return render_template('items.html', user=user, items=items)
@@ -73,8 +73,8 @@ def search_item(user_id):
             answer= json.loads(answer)
             wanted_items = answer["wanted_items"]
             user_want_this=answer["user_want_this"]
-            user_want_to_add=answer["user_want_to_add"]
-            if wanted_items and user_want_to_add or wanted_items and user_want_this:
+            #user_want_to_add=answer["user_want_to_add"]
+            if wanted_items and user_want_this:
                 list_of_items=data_manager.transform_data(user_id,wanted_items)
                 for item in list_of_items:
                     item_data, genre_data = item
@@ -111,20 +111,18 @@ def add_item(user_id):
         flash(f"There are no results by given name '{game_name_from_user}'.")
         return redirect(url_for('show_items', user_id=user_id))
 
-    # TODO hier muss noch einiges gemacht werden
-    AI.check_data(game_data_from_api)
 
     first_result = game_data_from_api["results"][0]
+    #data_manager.prepare_rawg_data(first_result)
     # the first result should be the searched one the user wants? suggested from api
 
-    background_image_url = first_result["background_image"]
-    rawg_game_id = first_result["id"]
-    game_name = first_result["name"]
-    game_release = first_result["released"]
+    background_image_url = first_result.get("background_image")
+    rawg_game_id = first_result.get("id")
+    game_name = first_result.get("name")
+    game_release = first_result.get("released")
     rating = first_result.get("rating")
+    summary = first_result.get("summary","")
 
-    #TODO das muss gemacht werden
-    summary= "zZ nur zum testen"
     item_data = {
         'user_id': user_id,
         'rawg_game_id': rawg_game_id,
@@ -134,10 +132,13 @@ def add_item(user_id):
         'background_image_url': background_image_url,
         'summary':summary
     }
+    """
     print("item_data: ", item_data)
     print("background_image_url: ", background_image_url)
     print("first_result ", first_result)
     print("genres", first_result.get("genres"))
+    """
+
     genre_data = first_result.get("genres", [])
 
     success = data_manager.create_item(user_id, item_data, genre_data)
@@ -162,7 +163,7 @@ def change_item_name(user_id, item_id):
     """
     new_name = request.form.get("title")
 
-    data_manager.change_item_data(item_id, new_name)
+    data_manager.change_personal_item_data(user_id,item_id, new_name)
     # print("changing name to : ",new_name)
 
     return redirect(url_for('show_items', user_id=user_id))
