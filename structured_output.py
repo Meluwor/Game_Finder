@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 class ItemInfo(BaseModel):
     item_name: str = Field(description="Name das ermitttelten Gegenstandes")
-    genre:Optional[ List[str]] = Field(default=None,
+    genres:Optional[ List[str]] = Field(default=None,
                                        description="Ermittelte Genre['genre_name','genre_name']")
     release: Optional[str] = Field(default=None,
                                    description="Erscheinungsjahr")
@@ -24,7 +24,7 @@ class ItemInfo(BaseModel):
 
 class ItemList(BaseModel):
     answer_to_user: str = Field(description="Freundliche Antwort im Stil das Game-Finder-Agenten")
-    items: List[ItemInfo] = Field(description="Eine Liste der empfohlenen oder gefundenen Gegenstände")
+    items: List[str] = Field(description="Eine Namensliste der empfohlenen oder gefundenen Gegenstände")
     user_want_this: bool =Field(default=False,
         description="True, wenn der User im Chat signalisiert, dass er an einem der vorgeschlagenen Gegenstände interessiert ist.")
     wanted_items: List[ItemInfo] = Field(

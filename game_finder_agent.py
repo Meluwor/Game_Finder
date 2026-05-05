@@ -1,6 +1,6 @@
 import operator
 import os
-from typing import TypedDict, Sequence, Annotated
+from typing import TypedDict, Sequence, Annotated, List
 
 from dotenv import load_dotenv
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
@@ -12,6 +12,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.runnables import RunnableConfig
 
 from Game_Finder import RAWG_API
+from Game_Finder.app import data_manager
 from Game_Finder.structured_output import ItemList
 
 load_dotenv()
@@ -21,7 +22,7 @@ OPEN_AI_KEY = os.getenv("OPENAI_GTP_KEY")
 
 model_for_core = ChatOpenAI(
     temperature=0,
-    model="gpt-5-mini",
+    model="gpt-4o-mini",
     api_key=OPEN_AI_KEY
 )
 model_for_structured_output = ChatOpenAI(
@@ -44,15 +45,30 @@ def call_me_allways():
 
 
 @tool
-def connect_to_rawg(item_name:str)-> str:
+def connect_to_rawg(item_names:List[str])-> List[dict]:
     """
     This function will allow the LLM to get specific game data via the RAWG-API
     """
-    print("<<<<<<<<<RAWG-CALL>>>>>>>>>")
-    RAWG_API.search_game_by_name(item_name)
-    # TODO hier sollte die RAWG-API mit rein
 
-    return None
+    if not item_names:
+        return "There are no given names to search for!"
+    is_available, message = RAWG_API.prepare_and_check_api()
+    if not is_available:
+        return "Problem with API: "+message
+    print("<<<<<<<<<RAWG-CALL>>>>>>>>>")
+    print("item_names:", item_names)
+    game_data=[]
+    #an id to fit the shema
+    fake_user_id=-1
+    for name in item_names:
+        print("-----searching game via rawg-----")
+
+        game_data_from_api = RAWG_API.search_game_by_name(name)
+        results = game_data_from_api.get("results")
+        item_data,genre_data = data_manager.prepare_rawg_data(fake_user_id,results)
+        game_data.append((item_data,genre_data))
+    return  game_data
+
 
 
 tools = [call_me_allways, connect_to_rawg]
@@ -64,6 +80,7 @@ model_with_tools = model_for_core.bind_tools(tools)
 class AgentState(TypedDict):
     # BaseMessage: System,User,Agent
     messages: Annotated[Sequence[BaseMessage], operator.add]
+    final_output: ItemList
 
 
 def call_model(state: AgentState):
@@ -79,12 +96,7 @@ def format_output(state:AgentState):
     This node will format the given input to a structured one with the help off a LLM.
     """
     print("checking output")
-    """
-        "Du bist ein Extraktions-Assistent. Deine einzige Aufgabe ist es, "
-        "Informationen aus dem Kontext in das Schema zu übertragen. "
-        "Erfinde NIEMALS Daten. Wenn Daten (wie IDs oder URLs) im Kontext nicht "
-        "existieren, lasse die Felder leer oder nutze None. Erstelle keine fiktiven Links."
-    """
+
     prompt = SystemMessage(content=(
         "Du bist ein Extraktions-Assistent. Deine einzige Aufgabe ist es, "
         "Informationen aus dem Kontext in das Schema zu übertragen. "
@@ -96,7 +108,7 @@ def format_output(state:AgentState):
     response = structured_llm.invoke([prompt] + messages)
     print("output generated")
     #Todo speichere hier core antwort und formatter antwort
-    return {"messages": [AIMessage(content=response.json())]}
+    return {"messages": [AIMessage(content=response.model_dump_json())]}
 
 
 work_flow = StateGraph(AgentState)
@@ -127,12 +139,12 @@ app = work_flow.compile(checkpointer=memory)
 
 def chat_bot(user_id,user_content):
     config: RunnableConfig = {"configurable": {"thread_id": user_id}}
-    system_start_content = ("Du bist ein Spieleberater, der mit Hilfe seiner Tools über die Game-Finder app wacht und sich keine Daten ausdenkt. "
-                            "Deine Hauptaufgabe besteht darin dem User NUR in Bezug auf Spiele zu beraten und du hast auch immer ein spiel parat")
+
     system_start_content=("Du bist ein Spieleberater für die Game-Finder-App. "
                           "Nutze deine Tools für alle Informationen und erfinde niemals Daten (keine Halluzinationen). "
                           "Berate den User ausschließlich zu Videospielen. "
                           "Biete in jeder Antwort mindestens eine konkrete Spieleempfehlung an.")
+
     start_state = app.get_state(config)
     if not start_state.values.get("messages"):
         app.update_state(config, {"messages": [SystemMessage(content=system_start_content)]})
@@ -154,7 +166,7 @@ def chat_bot(user_id,user_content):
 
 
 def start_for_testing():
-    #TODO die id sollte angepasst werden
+
     config: RunnableConfig = {"configurable": {"thread_id": "lokaler_test_thread"}}
     system_start_content = ("Du bist ein Spieleberater der mit Hilfe seiner Tools über die Game-Finder app wacht. "
                             "Deine Hauptaufgabe besteht darin dem user nur! in Bezug auf Spiele zu beraten")

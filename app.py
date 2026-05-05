@@ -43,7 +43,7 @@ def create_user():
     return render_template('index.html', users=data_manager.get_users())
 
 
-@app.route("/show_items<int:user_id>/items", methods=["GET"])
+@app.route("/show_items/<int:user_id>/items", methods=["GET"])
 def show_items(user_id):
     """
     This route will show all favorites of a user.
@@ -54,7 +54,9 @@ def show_items(user_id):
         if not items:
             print("User has no items atm.")
         return render_template('items.html', user=user, items=items)
-    abort(404, description=f"There is no user by given id:{user_id}.")
+    print("You are not welcome!")
+    flash("User not found!")
+    return redirect(url_for('index'))
 
 @app.route("/search_item/<int:user_id>")
 def search_item(user_id):
@@ -73,12 +75,10 @@ def search_item(user_id):
             answer= json.loads(answer)
             wanted_items = answer["wanted_items"]
             user_want_this=answer["user_want_this"]
-            #user_want_to_add=answer["user_want_to_add"]
             if wanted_items and user_want_this:
                 list_of_items=data_manager.transform_data(user_id,wanted_items)
-                for item in list_of_items:
-                    item_data, genre_data = item
-                    data_manager.create_item(user_id,item_data,genre_data)
+                for item_data, genre_data in list_of_items:
+                    data_manager.create_item(user_id,item_data, genre_data)
                 print("wanted_items",wanted_items)
     print("searching for: ",search_for)
     print("answer type", type(answer))
@@ -106,40 +106,13 @@ def add_item(user_id):
     # Todo hier sollte RAWG/openAI ins spiel kommen
 
     game_data_from_api = RAWG_API.search_game_by_name(game_name_from_user)
-
-    if not game_data_from_api.get("results"):
+    results = game_data_from_api.get("results")
+    if not results:
         flash(f"There are no results by given name '{game_name_from_user}'.")
         return redirect(url_for('show_items', user_id=user_id))
 
 
-    first_result = game_data_from_api["results"][0]
-    #data_manager.prepare_rawg_data(first_result)
-    # the first result should be the searched one the user wants? suggested from api
-
-    background_image_url = first_result.get("background_image")
-    rawg_game_id = first_result.get("id")
-    game_name = first_result.get("name")
-    game_release = first_result.get("released")
-    rating = first_result.get("rating")
-    summary = first_result.get("summary","")
-
-    item_data = {
-        'user_id': user_id,
-        'rawg_game_id': rawg_game_id,
-        'name': game_name,
-        'release': game_release,
-        'rating': rating,
-        'background_image_url': background_image_url,
-        'summary':summary
-    }
-    """
-    print("item_data: ", item_data)
-    print("background_image_url: ", background_image_url)
-    print("first_result ", first_result)
-    print("genres", first_result.get("genres"))
-    """
-
-    genre_data = first_result.get("genres", [])
+    item_data,genre_data = data_manager.prepare_rawg_data(user_id,results)
 
     success = data_manager.create_item(user_id, item_data, genre_data)
 
@@ -162,9 +135,7 @@ def change_item_name(user_id, item_id):
     This route will allow a user to rename his item.
     """
     new_name = request.form.get("title")
-
     data_manager.change_personal_item_data(user_id,item_id, new_name)
-    # print("changing name to : ",new_name)
 
     return redirect(url_for('show_items', user_id=user_id))
 

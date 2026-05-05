@@ -180,10 +180,39 @@ class DataManager:
                 'summary': item["summary"]
             }
             genre_data=[]
-            for genre in item["genre"]:
+            for genre in item["genres"]:
                 genre_data.append({"name":genre,
-                                   "id":"test}"})
+                                   "id":"test"})
 
             list_of_items.append((item_data,genre_data))
         print("-----finished transforming----")
         return list_of_items
+
+    def prepare_rawg_data(self, user_id,data):
+        """
+        This method will extract the needed/wanted data given from RAWG-API to feed the llm with.
+        """
+        print("---preparing rawg data--------")
+        if not data:
+            return None,None
+        # the first result should be the searched one the user wants? suggested from api
+        first_result = data[0]
+
+        background_image_url = first_result.get("background_image")
+        rawg_game_id = first_result.get("id")
+        game_name = first_result.get("name")
+        game_release = first_result.get("released")
+        rating = first_result.get("rating")
+        summary = first_result.get("summary", "")
+
+        item_data = {
+            'user_id': user_id,
+            'rawg_game_id': rawg_game_id,
+            'name': game_name,
+            'release': game_release,
+            'rating': rating,
+            'background_image_url': background_image_url,
+            'summary': summary
+        }
+        genre_data = first_result.get("genres", [])
+        return item_data,genre_data
