@@ -70,6 +70,21 @@ class DataManager:
             print(f"Error: {e}")
             return []
 
+    def get_user_data(self, user_id):
+        """
+        This method will return user relevant data for the LLM
+        """
+        user_items = self.get_user_items(user_id)
+
+        item_names=[]
+        genres=set()
+        for user_item in user_items:
+            item_names.append(user_item.item.game_name)
+            for genre in self.get_genres(item_id=user_item.item.id):
+                genres.add(genre)
+        return{"namen":item_names,
+               "genres":list(genres)}
+
     def create_item(self, user_id, item_data, genre_data):
         """
         This method creates a new item and stores it into database.
@@ -147,13 +162,14 @@ class DataManager:
             db.session.delete(user_item)
             db.session.commit()
 
-    def create_genre(self):
+    def get_genres(self, item_id):
         """
-        This method will add a new genre.
+        This method will return all genres of an item.
         """
-        # first: check if the genre already exist in database
-
-        pass
+        item = Item.query.filter_by(id=item_id).first()
+        if not item:
+            return []
+        return [genre.name for genre in item.genres]
 
     def does_this_item_exist(self, item_name):
         """
@@ -180,9 +196,11 @@ class DataManager:
                 'summary': item["summary"]
             }
             genre_data=[]
-            for genre in item["genres"]:
-                genre_data.append({"name":genre,
-                                   "id":"test"})
+            genres= item["genres"]
+            if genres:
+                for genre_name in genres:
+                    genre_data.append({"name":genre_name,
+                                        "id":"test"})
 
             list_of_items.append((item_data,genre_data))
         print("-----finished transforming----")

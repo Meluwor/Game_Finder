@@ -35,19 +35,20 @@ model_for_structured_output = ChatOpenAI(
 
 
 @tool
-def call_me_allways():
+def call_me_allways(config: RunnableConfig):
     """
     This function has all needed knowledge of this user based on database.
     """
-    # TODO llm greift darauf zu mal schaun wie weit
-    print("<<<<<<<<<i got a call>>>>>>>>>")
-    return None
+    user_id = config["configurable"]["user_id"]
+    user_data = data_manager.get_user_data(user_id)
+    print(f"<<<<<<<<<i got a call: {user_id}>>>>>>>>>")
+    return user_data
 
 
 @tool
 def connect_to_rawg(item_names:List[str])-> List[dict]:
     """
-    This function will allow the LLM to get specific game data via the RAWG-API
+    This function will allow the LLM to get all needed game data via the RAWG-API
     """
 
     if not item_names:
@@ -100,8 +101,9 @@ def format_output(state:AgentState):
     prompt = SystemMessage(content=(
         "Du bist ein Extraktions-Assistent. Deine einzige Aufgabe ist es, "
         "Informationen aus dem Kontext in das Schema zu übertragen. "
-        "Erfinde NIEMALS Daten. Wenn Daten (wie IDs oder URLs) im Kontext nicht "
-        "existieren, lasse die Felder leer oder nutze None. Erstelle keine fiktiven Links."
+        "Erfinde NIEMALS Daten."
+        "Wenn Daten nicht existieren, lasse die Felder leer oder nutze None."
+        "Erstelle keine fiktiven Links."
         "Nutze die letzte Antwort des Beraters für das Feld 'answer_to_user'"
     ))
     messages = state["messages"]
@@ -138,12 +140,20 @@ app = work_flow.compile(checkpointer=memory)
 
 
 def chat_bot(user_id,user_content):
-    config: RunnableConfig = {"configurable": {"thread_id": user_id}}
+    config: RunnableConfig = {"configurable": {"thread_id": f"chating_with_user_:{user_id}",
+                                               "user_id":user_id
+                                               }}
 
-    system_start_content=("Du bist ein Spieleberater für die Game-Finder-App. "
-                          "Nutze deine Tools für alle Informationen und erfinde niemals Daten (keine Halluzinationen). "
-                          "Berate den User ausschließlich zu Videospielen. "
-                          "Biete in jeder Antwort mindestens eine konkrete Spieleempfehlung an.")
+    system_start_content=(f"""Du bist ein Spieleberater für die Game-Finder-App.
+                          Halte dich an folgende Regeln:
+                          1.Nutze deine Tools für alle Informationen und erfinde niemals Daten (keine Halluzinationen)!
+                          2.Besorge dir alle informationen über den User!
+                          3.Berate den User ausschließlich zu Videospielen!
+                          4.Biete in jeder Antwort mindestens eine mögliche Spieleempfehlung an.
+                          5.Bleib auf dem Laufenden und besorge dir immer das Neuste!
+                          6.Vermeide dem User Gegenstände anzubieten die er bereits kennt!
+                          7.Besorge dir die neusten Informationen über Spiele mit Hilfe der RAWG-API!
+                            """)
 
     start_state = app.get_state(config)
     if not start_state.values.get("messages"):

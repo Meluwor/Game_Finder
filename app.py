@@ -79,11 +79,11 @@ def search_item(user_id):
                 list_of_items=data_manager.transform_data(user_id,wanted_items)
                 for item_data, genre_data in list_of_items:
                     data_manager.create_item(user_id,item_data, genre_data)
-                print("wanted_items",wanted_items)
+                print(f"wanted_items{len(wanted_items)}",wanted_items)
     print("searching for: ",search_for)
     print("answer type", type(answer))
     print("route_answer:",answer)
-
+    # Todo das könnte man schöner machen für den user
     #flash(answer.get("answer_to_user", "Suche abgeschlossen!"))
     flash(answer)
     return redirect(url_for("show_items", user_id=user_id))
