@@ -76,21 +76,21 @@ class DataManager:
         """
         user_items = self.get_user_items(user_id)
 
-        item_names=[]
-        genres=set()
+        item_names = []
+        genres = set()
         for user_item in user_items:
             item_names.append(user_item.item.game_name)
             for genre in self.get_genres(item_id=user_item.item.id):
                 genres.add(genre)
-        return{"namen":item_names,
-               "genres":list(genres)}
+        return {"namen": item_names,
+                "genres": list(genres)}
 
     def create_item(self, user_id, item_data, genre_data):
         """
         This method creates a new item and stores it into database.
         """
 
-        item_name=item_data.get('name')
+        item_name = item_data.get('name')
 
         new_item = self.does_this_item_exist(item_name)
         if not new_item:
@@ -101,7 +101,7 @@ class DataManager:
                 release=item_data.get('release'),
                 rating=item_data.get('rating'),
                 background_image_url=item_data.get('background_image_url'),
-                summary = item_data.get('summary')
+                summary=item_data.get('summary')
 
             )
 
@@ -121,7 +121,7 @@ class DataManager:
         if already_linked:
             return False
 
-        user_item = UserItem(user_id=user_id, item_id=new_item.id,custom_item_name=item_name)
+        user_item = UserItem(user_id=user_id, item_id=new_item.id, custom_item_name=item_name)
         db.session.add(user_item)
         try:
             db.session.commit()
@@ -131,7 +131,7 @@ class DataManager:
             print(f"Update-Fehler: {e}")
             return False
 
-    def change_personal_item_data(self, user_id,item_id, new_name):
+    def change_personal_item_data(self, user_id, item_id, new_name):
         """
         This method shall ensure to change the item data like name img-url, price, genre, rating, etc. ATM just the name.
         """
@@ -142,7 +142,7 @@ class DataManager:
         if not user_item:
             return False
         if user_item.custom_item_name == new_name:
-            #no changes
+            # no changes
             return False
         user_item.custom_item_name = new_name
         try:
@@ -175,15 +175,15 @@ class DataManager:
         """
         This method checks if a given item exists already.
         """
-        #TODO eine id wäre hier besser
+        # TODO eine id wäre hier besser
         return Item.query.filter_by(game_name=item_name).first()
 
-    def transform_data(self,user_id, wanted_items):
+    def transform_data(self, user_id, wanted_items):
         """
         This method will handle the given data from the LLM to fit the database shema.
         """
         print("-----transforming data----")
-        list_of_items=[]
+        list_of_items = []
 
         for item in wanted_items:
             item_data = {
@@ -195,24 +195,24 @@ class DataManager:
                 'background_image_url': item["background_image_url"],
                 'summary': item["summary"]
             }
-            genre_data=[]
-            genres= item["genres"]
+            genre_data = []
+            genres = item["genres"]
             if genres:
                 for genre_name in genres:
-                    genre_data.append({"name":genre_name,
-                                        "id":"test"})
+                    genre_data.append({"name": genre_name,
+                                       "id": "test"})
 
-            list_of_items.append((item_data,genre_data))
+            list_of_items.append((item_data, genre_data))
         print("-----finished transforming----")
         return list_of_items
 
-    def prepare_rawg_data(self, user_id,data):
+    def prepare_rawg_data(self, user_id, data):
         """
         This method will extract the needed/wanted data given from RAWG-API to feed the llm with.
         """
         print("---preparing rawg data--------")
         if not data:
-            return None,None
+            return None, None
         # the first result should be the searched one the user wants? suggested from api
         first_result = data[0]
 
@@ -233,4 +233,4 @@ class DataManager:
             'summary': summary
         }
         genre_data = first_result.get("genres", [])
-        return item_data,genre_data
+        return item_data, genre_data

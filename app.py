@@ -58,6 +58,7 @@ def show_items(user_id):
     flash("User not found!")
     return redirect(url_for('index'))
 
+
 @app.route("/search_item/<int:user_id>")
 def search_item(user_id):
     user = data_manager.get_user(user_id)
@@ -67,24 +68,24 @@ def search_item(user_id):
         flash("User not found!")
         return redirect(url_for('index'))
     search_for = request.args.get("name").strip()
-    answer="You searched for nothing!"
+    answer = "You searched for nothing!"
     if search_for:
-        #a long string in JSON-Format
-        answer=AI.search_for(user_id,search_for)
+        # a long string in JSON-Format
+        answer = AI.search_for(user_id, search_for)
         if answer:
-            answer= json.loads(answer)
+            answer = json.loads(answer)
             wanted_items = answer["wanted_items"]
-            user_want_this=answer["user_want_this"]
+            user_want_this = answer["user_want_this"]
             if wanted_items and user_want_this:
-                list_of_items=data_manager.transform_data(user_id,wanted_items)
+                list_of_items = data_manager.transform_data(user_id, wanted_items)
                 for item_data, genre_data in list_of_items:
-                    data_manager.create_item(user_id,item_data, genre_data)
-                print(f"wanted_items{len(wanted_items)}",wanted_items)
-    print("searching for: ",search_for)
+                    data_manager.create_item(user_id, item_data, genre_data)
+                print(f"wanted_items{len(wanted_items)}", wanted_items)
+    print("searching for: ", search_for)
     print("answer type", type(answer))
-    print("route_answer:",answer)
+    print("route_answer:", answer)
     # Todo das könnte man schöner machen für den user
-    #flash(answer.get("answer_to_user", "Suche abgeschlossen!"))
+    # flash(answer.get("answer_to_user", "Suche abgeschlossen!"))
     flash(answer)
     return redirect(url_for("show_items", user_id=user_id))
 
@@ -111,8 +112,7 @@ def add_item(user_id):
         flash(f"There are no results by given name '{game_name_from_user}'.")
         return redirect(url_for('show_items', user_id=user_id))
 
-
-    item_data,genre_data = data_manager.prepare_rawg_data(user_id,results)
+    item_data, genre_data = data_manager.prepare_rawg_data(user_id, results)
 
     success = data_manager.create_item(user_id, item_data, genre_data)
 
@@ -135,7 +135,7 @@ def change_item_name(user_id, item_id):
     This route will allow a user to rename his item.
     """
     new_name = request.form.get("title")
-    data_manager.change_personal_item_data(user_id,item_id, new_name)
+    data_manager.change_personal_item_data(user_id, item_id, new_name)
 
     return redirect(url_for('show_items', user_id=user_id))
 

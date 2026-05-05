@@ -21,7 +21,8 @@
         {% for user_item in items %}
         <li class="items">
             {% if user_item.item.background_image_url and user_item.item.background_image_url != 'N/A' %}
-            <img class="item_poster" src="{{ user_item.item.background_image_url }}" alt="Poster for {{ user_item.custom_item_name}}">
+            <img class="item_poster" src="{{ user_item.item.background_image_url }}"
+                 alt="Poster for {{ user_item.custom_item_name}}">
             {% else %}
             <div class="item_poster_placeholder">No Image</div>
             {% endif %}

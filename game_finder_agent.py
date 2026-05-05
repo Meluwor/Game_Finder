@@ -32,8 +32,6 @@ model_for_structured_output = ChatOpenAI(
 )
 
 
-
-
 @tool
 def call_me_allways(config: RunnableConfig):
     """
@@ -46,7 +44,7 @@ def call_me_allways(config: RunnableConfig):
 
 
 @tool
-def connect_to_rawg(item_names:List[str])-> List[dict]:
+def connect_to_rawg(item_names: List[str]) -> List[dict]:
     """
     This function will allow the LLM to get all needed game data via the RAWG-API
     """
@@ -55,21 +53,20 @@ def connect_to_rawg(item_names:List[str])-> List[dict]:
         return "There are no given names to search for!"
     is_available, message = RAWG_API.prepare_and_check_api()
     if not is_available:
-        return "Problem with API: "+message
+        return "Problem with API: " + message
     print("<<<<<<<<<RAWG-CALL>>>>>>>>>")
     print("item_names:", item_names)
-    game_data=[]
-    #an id to fit the shema
-    fake_user_id=-1
+    game_data = []
+    # an id to fit the shema
+    fake_user_id = -1
     for name in item_names:
         print("-----searching game via rawg-----")
 
         game_data_from_api = RAWG_API.search_game_by_name(name)
         results = game_data_from_api.get("results")
-        item_data,genre_data = data_manager.prepare_rawg_data(fake_user_id,results)
-        game_data.append((item_data,genre_data))
-    return  game_data
-
+        item_data, genre_data = data_manager.prepare_rawg_data(fake_user_id, results)
+        game_data.append((item_data, genre_data))
+    return game_data
 
 
 tools = [call_me_allways, connect_to_rawg]
@@ -92,7 +89,7 @@ def call_model(state: AgentState):
 
 
 structured_llm = model_for_structured_output.with_structured_output(ItemList)
-def format_output(state:AgentState):
+def format_output(state: AgentState):
     """
     This node will format the given input to a structured one with the help off a LLM.
     """
@@ -109,7 +106,7 @@ def format_output(state:AgentState):
     messages = state["messages"]
     response = structured_llm.invoke([prompt] + messages)
     print("output generated")
-    #Todo speichere hier core antwort und formatter antwort
+    # Todo speichere hier core antwort und formatter antwort
     return {"messages": [AIMessage(content=response.model_dump_json())]}
 
 
@@ -134,17 +131,17 @@ work_flow.add_conditional_edges(
 )
 work_flow.add_edge("formatter", END)
 
-#RAM based memori
+# RAM based memori
 memory = MemorySaver()
 app = work_flow.compile(checkpointer=memory)
 
 
-def chat_bot(user_id,user_content):
+def chat_bot(user_id, user_content):
     config: RunnableConfig = {"configurable": {"thread_id": f"chating_with_user_:{user_id}",
-                                               "user_id":user_id
+                                               "user_id": user_id
                                                }}
 
-    system_start_content=(f"""Du bist ein Spieleberater für die Game-Finder-App.
+    system_start_content = (f"""Du bist ein Spieleberater für die Game-Finder-App.
                           Halte dich an folgende Regeln:
                           1.Nutze deine Tools für alle Informationen und erfinde niemals Daten (keine Halluzinationen)!
                           2.Besorge dir alle informationen über den User!
@@ -160,7 +157,7 @@ def chat_bot(user_id,user_content):
         app.update_state(config, {"messages": [SystemMessage(content=system_start_content)]})
 
     initial_state = {"messages": [HumanMessage(content=user_content)]}
-    answer= ""
+    answer = ""
     for output in app.stream(initial_state, config=config):
         for key, value in output.items():
             print(f"Output from node: {key}")
@@ -173,10 +170,7 @@ def chat_bot(user_id,user_content):
     return answer
 
 
-
-
 def start_for_testing():
-
     config: RunnableConfig = {"configurable": {"thread_id": "lokaler_test_thread"}}
     system_start_content = ("Du bist ein Spieleberater der mit Hilfe seiner Tools über die Game-Finder app wacht. "
                             "Deine Hauptaufgabe besteht darin dem user nur! in Bezug auf Spiele zu beraten")
@@ -185,14 +179,13 @@ def start_for_testing():
     if not start_state.values.get("messages"):
         app.update_state(config, {"messages": [SystemMessage(content=system_start_content)]})
 
-
     calls = 0
     while True:
         if calls == MAX_AGENT_CALLS:
-            #TODO hier muss man mal schaun zwecks Token Überwachung
+            # TODO hier muss man mal schaun zwecks Token Überwachung
             print("end of calls")
             break
-            #TODO ne userinfo wäre angebracht
+            # TODO ne userinfo wäre angebracht
         calls += 1
         user_prompt = input("What you searching for: ").strip()
         if not user_prompt:
