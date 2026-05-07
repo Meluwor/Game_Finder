@@ -82,8 +82,12 @@ class DataManager:
             item_names.append(user_item.item.game_name)
             for genre in self.get_genres(item_id=user_item.item.id):
                 genres.add(genre)
-        return {"namen": item_names,
-                "genres": list(genres)}
+        return {
+            "user_data": {
+                "already_owned_items": item_names,
+                "played_genres": list(genres)
+            }
+        }
 
     def create_item(self, user_id, item_data, genre_data):
         """

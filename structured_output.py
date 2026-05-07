@@ -18,15 +18,14 @@ class ItemInfo(BaseModel):
         default=None,
         description="Die echte RAWG-ID falls vorhanden, ansonsten leer lassen (None)."
     )
-    summary: Optional[str] = Field(default=None,
-                                   description="Eine kurze Zusammenfassung über diesen Gegenstand max: 950 Zeichen")
+    summary: str = Field(description="Eine kurze Zusammenfassung über diesen Gegenstand max: 950 Zeichen")
 
 
 class ItemList(BaseModel):
     answer_to_user: str = Field(description="Freundliche Antwort im Stil das Game-Finder-Agenten")
-    items: List[str] = Field(description="Eine Namensliste der empfohlenen oder gefundenen Gegenstände")
+    new_items: List[str] = Field(description="Eine Namensliste der neu empfohlenen oder gefundenen Gegenstände die der User nicht besitzt")
     user_want_this: bool = Field(default=False,
-                                 description="True, wenn der User im Chat signalisiert, dass er an einem der vorgeschlagenen Gegenstände interessiert ist.")
+                                 description="True, wenn der User im Chat signalisiert, dass er an bestimmte oder vorgeschlagene Gegenstände interessiert ist.")
     wanted_items: List[ItemInfo] = Field(
         default=[],
         description="Liste der konkreten Gegenstände, die der Nutzer haben oder seinem Inventar hinzufügen möchte."

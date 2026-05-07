@@ -1,3 +1,4 @@
+import json
 import operator
 import os
 from typing import TypedDict, Sequence, Annotated, List
@@ -44,9 +45,9 @@ def call_me_allways(config: RunnableConfig):
 
 
 @tool
-def connect_to_rawg(item_names: List[str]) -> List[dict]:
+def connect_to_rawg(item_names: List[str]) -> str:
     """
-    This function will allow the LLM to get all needed game data via the RAWG-API
+    This function will allow the LLM to get new game data via the RAWG-API
     """
 
     if not item_names:
@@ -56,7 +57,7 @@ def connect_to_rawg(item_names: List[str]) -> List[dict]:
         return "Problem with API: " + message
     print("<<<<<<<<<RAWG-CALL>>>>>>>>>")
     print("item_names:", item_names)
-    game_data = []
+    game_data = {}
     # an id to fit the shema
     fake_user_id = -1
     for name in item_names:
@@ -65,8 +66,9 @@ def connect_to_rawg(item_names: List[str]) -> List[dict]:
         game_data_from_api = RAWG_API.search_game_by_name(name)
         results = game_data_from_api.get("results")
         item_data, genre_data = data_manager.prepare_rawg_data(fake_user_id, results)
-        game_data.append((item_data, genre_data))
-    return game_data
+        game_data[name] ={"item_data":item_data,
+                          "genre_data":genre_data}
+    return json.dumps(game_data, indent=2)
 
 
 tools = [call_me_allways, connect_to_rawg]
@@ -146,10 +148,11 @@ def chat_bot(user_id, user_content):
                           1.Nutze deine Tools für alle Informationen und erfinde niemals Daten (keine Halluzinationen)!
                           2.Besorge dir alle informationen über den User!
                           3.Berate den User ausschließlich zu Videospielen!
-                          4.Biete in jeder Antwort mindestens eine mögliche Spieleempfehlung an.
+                          4.Biete in jeder Antwort eine neue Spieleempfehlung an.
                           5.Bleib auf dem Laufenden und besorge dir immer das Neuste!
-                          6.Vermeide dem User Gegenstände anzubieten die er bereits kennt!
-                          7.Besorge dir die neusten Informationen über Spiele mit Hilfe der RAWG-API!
+                          6.ABSOLUTES VERBOT: Schlage niemals, unter keinen Umständen, ein Spiel vor, das in der Liste 'already_owned_items' auftaucht. Gleiche jeden Vorschlag erst mit dieser Liste ab!“!
+                          7.Nutze die RAWG-API nur, wenn du Informationen zu neuen Spielen benötigst, die nicht in den User-Daten vorhanden sind.
+                          8.Bevor du antwortest, schreibe für dich selbst (intern) einen Abgleich: 'Vorschlag: [Spiel] | In Besitz: [Ja/Nein]'.
                             """)
 
     start_state = app.get_state(config)
