@@ -4,18 +4,17 @@
 
 <a href="{{ url_for('index') }}" class="back-link">← Main Menu</a>
 <div class="">
-    <h2>Search ITEM</h2>
-    <form action="{{ url_for('search_item', user_id=user.id) }}" method="GET">
-        <input type="text" name="name" placeholder="ITEM name" required="">
-        <button type="submit" class="crud_btn">Search ITEM</button>
+    <h2>Search</h2>
+    <form action="{{ url_for('search_with_agent', user_id=user.id) }}" method="GET">
+        <button type="submit" class="crud_btn">Search for something new</button>
     </form>
-    <h2>Add ITEM</h2>
+    <h2>Add Game</h2>
     <form action="{{ url_for('add_item', user_id=user.id) }}" method="POST">
-        <input type="text" name="name" placeholder="ITEM name" required="">
-        <button type="submit" class="crud_btn">Add ITEM</button>
+        <input type="text" name="name" placeholder="add game by name" required="">
+        <button type="submit" class="crud_btn">Add Game</button>
     </form>
 </div>
-<h1>Items of {{user.name}}</h1>
+<h1>Games of {{user.name}}</h1>
 <div>
     <ul class="item_list">
         {% for user_item in items %}
@@ -30,17 +29,24 @@
 
             <form action="{{ url_for('change_item_name',user_id=user.id, item_id=user_item.item.id)}}" method="POST">
                 <input type="text" name="title" value="{{ user_item.custom_item_name}}" required=""><br>
-                <button type="submit" class="crud_btn">Update</button>
+                <button type="submit" class="crud_btn">Rename</button>
                 <br>
+                <strong>Release:</strong>{{ user_item.item.release }}<br>
+                <strong>Name:</strong>{{ user_item.custom_item_name }}<br>
+                <strong>Rating:</strong>{{ user_item.item.rating }}<br>
+            </form>
 
-                <strong>Year:</strong>{{ user_item.item.release }}<br>
-                <strong>ITEM_name:</strong>{{ user_item.custom_item_name }}<br>
+            <form action="{{ url_for('update_item',user_id=user.id, item_id=user_item.item.id)}}" method="POST">
+                <button type="submit" class="crud_btn"
+                        onclick="return confirm(&#39;Update this item?&#39;);">Update
+                </button>
             </form>
             <form action="{{ url_for('delete_item',user_id=user.id, item_id=user_item.item.id)}}" method="POST">
                 <button type="submit" class="crud_btn"
                         onclick="return confirm(&#39;Delete this item?&#39;);">Delete
                 </button>
             </form>
+
         </li>
 
         {% else %}

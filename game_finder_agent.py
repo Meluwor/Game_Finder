@@ -45,9 +45,9 @@ def call_me_allways(config: RunnableConfig):
 
 
 @tool
-def connect_to_rawg(item_names: List[str]) -> str:
+def connect_to_rawg(item_names: List[str],config: RunnableConfig) -> str:
     """
-    This function will allow the LLM to get new game data via the RAWG-API
+    This function will allow the LLM to get new game data via the RAWG-API. Just items which are not in database will be returned
     """
 
     if not item_names:
@@ -55,19 +55,29 @@ def connect_to_rawg(item_names: List[str]) -> str:
     is_available, message = RAWG_API.prepare_and_check_api()
     if not is_available:
         return "Problem with API: " + message
+    user_id = config["configurable"]["user_id"]
+    cleaned_names = data_manager.prepare_name_list(user_id,item_names)
+    if len(cleaned_names)==0:
+        return f"No need to search for this! user knows all theese games allready: {item_names}"
     print("<<<<<<<<<RAWG-CALL>>>>>>>>>")
-    print("item_names:", item_names)
+    print("item_names:", cleaned_names)
     game_data = {}
     # an id to fit the shema
     fake_user_id = -1
-    for name in item_names:
+    for name in cleaned_names:
         print("-----searching game via rawg-----")
 
         game_data_from_api = RAWG_API.search_game_by_name(name)
         results = game_data_from_api.get("results")
-        item_data, genre_data = data_manager.prepare_rawg_data(fake_user_id, results)
-        game_data[name] ={"item_data":item_data,
-                          "genre_data":genre_data}
+        if results:
+            item_data, genre_data = data_manager.prepare_rawg_data(fake_user_id, results)
+            game_data[name] = {"item_data":item_data,
+                               "genre_data":genre_data}
+        else:
+            game_data[name] = {
+                "status": "not_found",
+                "message": f"Nothing was found by given name: '{name}'."
+            }
     return json.dumps(game_data, indent=2)
 
 
@@ -151,7 +161,7 @@ def chat_bot(user_id, user_content):
                           4.Biete in jeder Antwort eine neue Spieleempfehlung an.
                           5.Bleib auf dem Laufenden und besorge dir immer das Neuste!
                           6.ABSOLUTES VERBOT: Schlage niemals, unter keinen Umständen, ein Spiel vor, das in der Liste 'already_owned_items' auftaucht. Gleiche jeden Vorschlag erst mit dieser Liste ab!“!
-                          7.Nutze die RAWG-API nur, wenn du Informationen zu neuen Spielen benötigst, die nicht in den User-Daten vorhanden sind.
+                          7.Nutze die RAWG-API um Informationen zu neuen Spielen zu bekommen.
                           8.Bevor du antwortest, schreibe für dich selbst (intern) einen Abgleich: 'Vorschlag: [Spiel] | In Besitz: [Ja/Nein]'.
                             """)
 
@@ -164,11 +174,12 @@ def chat_bot(user_id, user_content):
     for output in app.stream(initial_state, config=config):
         for key, value in output.items():
             print(f"Output from node: {key}")
-            for message in value["messages"]:
-                last_message = value["messages"][-1]
-                answer = last_message.content
-                message.pretty_print()
-            print("------")
+            messages = value.get("messages",[])
+            if messages:
+                for message in value["messages"]:
+                    message.pretty_print()
+                    print("------")
+                answer=messages[-1].content
 
     return answer
 

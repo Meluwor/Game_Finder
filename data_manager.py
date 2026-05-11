@@ -238,3 +238,62 @@ class DataManager:
         }
         genre_data = first_result.get("genres", [])
         return item_data, genre_data
+
+    def prepare_name_list(self,user_id,item_names: list[str]):
+        """
+        This method shall ensure that the RAWG-Tool for the agent won't call RAWG for already existing games at database.
+        """
+        cleared_list=[]
+        user = self.get_user(user_id)
+        if not user:
+            return []
+        existing_user_item_names = [ui.item.game_name.lower().strip() for ui in user.items]
+        #TODO ein abgleich der user items
+
+        for item_name in item_names:
+            if not item_name.lower().strip() in existing_user_item_names:
+                cleared_list.append(item_name)
+        return cleared_list
+
+    def get_item(self, item_id):
+        """
+        This method will return an item by given name
+        """
+        return Item.query.get(item_id)
+
+    def update_item(self, item_id, item_data, genre_data):
+        """
+        This method will update an item.
+        """
+        item = Item.query.get(item_id)
+        if not item:
+            return False
+
+        item.game_name = item_data.get('game_name', item.game_name)
+        item.rawg_game_id = item_data.get('rawg_game_id', item.rawg_game_id)
+        item.release = item_data.get('release', item.release)
+        item.rating = item_data.get('rating', item.rating)
+        item.background_image_url = item_data.get('background_image_url', item.background_image_url)
+
+        if genre_data:
+            item.genres = []
+
+            for g in genre_data:
+                genre_obj = Genre.query.filter_by(name=g['name']).first()
+                if not genre_obj:
+                    genre_obj = Genre(
+                        name=g['name'],
+                        rawg_genre_id=g.get('rawg_genre_id')
+                    )
+                    db.session.add(genre_obj)
+                item.genres.append(genre_obj)
+
+        try:
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error while updating: {e}")
+            return False
+
+

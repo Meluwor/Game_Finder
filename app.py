@@ -1,7 +1,7 @@
 import json
 import os
 
-from flask import Flask, render_template, request, redirect, url_for, abort, flash
+from flask import Flask, render_template, request, redirect, url_for, abort, flash, session
 
 import RAWG_API
 import open_ai_basic as AI
@@ -76,19 +76,48 @@ def search_item(user_id):
             answer = json.loads(answer)
             wanted_items = answer["wanted_items"]
             user_want_this = answer["user_want_this"]
+            new_items = answer["new_items"]
+            if new_items:
+                #temp storrage of the data
+                session['temp_new_items'] = new_items
+                session['answer_to_user'] = answer.get("answer_to_user")
+                return redirect(url_for("show_new_items", user_id=user_id))
             if wanted_items and user_want_this:
                 list_of_items = data_manager.transform_data(user_id, wanted_items)
                 for item_data, genre_data in list_of_items:
                     data_manager.create_item(user_id, item_data, genre_data)
-                print(f"wanted_items{len(wanted_items)}", wanted_items)
-    print("searching for: ", search_for)
-    print("answer type", type(answer))
-    print("route_answer:", answer)
-    # Todo das könnte man schöner machen für den user
-    # flash(answer.get("answer_to_user", "Suche abgeschlossen!"))
-    flash(answer)
+                return redirect(url_for("show_items", user_id=user_id))
+    return redirect(url_for("show_new_items", user_id=user_id))
+
+    flash(answer.get("answer_to_user", "Suche abgeschlossen!"))
     return redirect(url_for("show_items", user_id=user_id))
 
+@app.route("/show_new_items/<int:user_id>")
+def show_new_items(user_id):
+    user = data_manager.get_user(user_id)
+    if not user:
+        print("You are not welcome!")
+        flash("User not found!")
+        return redirect(url_for('index'))
+    print("showing new items")
+    # getting the needed data out of the session and also deleting them
+    new_items = session.pop("temp_new_items", [])
+    answer_to_user = session.pop("answer_to_user")
+    print("new_items: ", new_items)
+    print("type new_items: ", type(new_items))
+    print(f"Zeige neue Items für User {user_id}: {new_items}")
+    return render_template("new_items.html", items=new_items, user=user,answer_to_user=answer_to_user)
+
+
+@app.route("/search_with_agent/<int:user_id>")
+def search_with_agent(user_id):
+    user = data_manager.get_user(user_id)
+    if not user:
+        print("You are not welcome!")
+        flash("User not found!")
+        return redirect(url_for('index'))
+    new_items=[]
+    return render_template("new_items.html", items=new_items, user=user,message="")
 
 @app.route("/add_item/<int:user_id>", methods=["POST"])
 def add_item(user_id):
@@ -103,8 +132,6 @@ def add_item(user_id):
         print("You are not welcome!")
         flash("User not found!")
         return redirect(url_for('index'))
-
-    # Todo hier sollte RAWG/openAI ins spiel kommen
 
     game_data_from_api = RAWG_API.search_game_by_name(game_name_from_user)
     results = game_data_from_api.get("results")
@@ -122,7 +149,7 @@ def add_item(user_id):
 @app.route("/delete_item/<int:user_id>/<int:item_id>", methods=["POST"])
 def delete_item(user_id, item_id):
     """
-    This route will delete an item.
+    This route will delete an item from user favourites.
     """
     print(f"deleting item_id: {item_id} from user: {user_id}")
     data_manager.delete_item_from_favourites(user_id, item_id)
@@ -139,6 +166,24 @@ def change_item_name(user_id, item_id):
 
     return redirect(url_for('show_items', user_id=user_id))
 
+@app.route("/update_item/<int:user_id>/<int:item_id>", methods=["POST"])
+def update_item(user_id, item_id):
+    """
+    This route will update an item.
+    """
+    item = data_manager.get_item(item_id)
+    item_name = item.game_name
+    game_data_from_api = RAWG_API.search_game_by_name(item_name)
+    results = game_data_from_api.get("results")
+    if not results:
+        flash(f"There are no results by given name '{item_name}'.")
+        return redirect(url_for('show_items', user_id=user_id))
+
+    item_data, genre_data = data_manager.prepare_rawg_data(user_id, results)
+
+    success = data_manager.update_item(item_id, item_data, genre_data)
+
+    return redirect(url_for('show_items', user_id=user_id))
 
 if __name__ == '__main__':
     # Readme: You have to activate this on first start to generate the Database. After you should/can deactivate it again.

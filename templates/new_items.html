@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+<a href="{{ url_for('index') }}" class="back-link">← Main Menu</a>
+<div class="">
+    <h2>Search Game</h2>
+    <form action="{{ url_for('search_item', user_id=user.id) }}" method="GET">
+        <textarea name="name" maxlength="200" placeholder="Z.B.: Ich suche ..." required></textarea>
+        <button type="submit" class="crud_btn">Search Game</button>
+    </form>
+</div>
+
+<h1>{{ answer_to_user }}</h1>
+<div>
+    <ul class="item_list">
+        {% for item in items %}
+        <li class="items">
+            {% if item.background_image_url and item.background_image_url != 'N/A' %}
+            <img class="item_poster" src="{{ item.background_image_url }}"
+                 alt="Poster for {{ item.game_name}}">
+            {% else %}
+            <div class="item_poster_placeholder">No Image</div>
+            {% endif %}
+            <strong>Name:</strong>{{ item.item_name }}<br>
+            <strong>Release:</strong>{{ item.release }}<br>
+            <strong>Rating</strong>{{ item.rating }}<br>
+            <strong>Genres:</strong>
+                {% if item.genres is iterable and item.genres is not string %}
+                {{ item.genres | join(', ') }}
+                {% else %}
+                {{ item.genres }}
+                {% endif %}
+            <strong>Summary:</strong>{{ item.summary }}
+        </li>
+
+        {% else %}
+        <li>Nothing searched yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+{% endblock %}

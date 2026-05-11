@@ -9,7 +9,7 @@ class ItemInfo(BaseModel):
     release: Optional[str] = Field(default=None,
                                    description="Erscheinungsjahr")
     rating: Optional[float] = Field(default=None,
-                                    description="Bewertung von 1 bis 10")
+                                    description="Bewertung von 1 bis 5")
     background_image_url: Optional[str] = Field(default=None,
                                                 description="Eine background_image_url zu diesem Gegenstand")
     source: Optional[str] = Field(default=None,
@@ -18,14 +18,14 @@ class ItemInfo(BaseModel):
         default=None,
         description="Die echte RAWG-ID falls vorhanden, ansonsten leer lassen (None)."
     )
-    summary: str = Field(description="Eine kurze Zusammenfassung über diesen Gegenstand max: 950 Zeichen")
+    summary: str = Field(description="Eine kurze Zusammenfassung über diesen Gegenstand max: 300 Zeichen")
 
 
 class ItemList(BaseModel):
-    answer_to_user: str = Field(description="Freundliche Antwort im Stil das Game-Finder-Agenten")
-    new_items: List[str] = Field(description="Eine Namensliste der neu empfohlenen oder gefundenen Gegenstände die der User nicht besitzt")
+    answer_to_user: str = Field(description="Kurze Antwort für den User")
+    new_items: List[ItemInfo] = Field(description="Eine Liste der neu gefundenen Gegenstände")
     user_want_this: bool = Field(default=False,
-                                 description="True, wenn der User im Chat signalisiert, dass er an bestimmte oder vorgeschlagene Gegenstände interessiert ist.")
+                                 description="True, wenn der User im Chat signalisiert, dass er an einen der vorgeschlagenen Gegenstände interessiert ist.")
     wanted_items: List[ItemInfo] = Field(
         default=[],
         description="Liste der konkreten Gegenstände, die der Nutzer haben oder seinem Inventar hinzufügen möchte."
