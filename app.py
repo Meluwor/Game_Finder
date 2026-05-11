@@ -77,16 +77,17 @@ def search_item(user_id):
             wanted_items = answer["wanted_items"]
             user_want_this = answer["user_want_this"]
             new_items = answer["new_items"]
-            if new_items:
-                #temp storrage of the data
-                session['temp_new_items'] = new_items
-                session['answer_to_user'] = answer.get("answer_to_user")
-                return redirect(url_for("show_new_items", user_id=user_id))
             if wanted_items and user_want_this:
                 list_of_items = data_manager.transform_data(user_id, wanted_items)
                 for item_data, genre_data in list_of_items:
                     data_manager.create_item(user_id, item_data, genre_data)
                 return redirect(url_for("show_items", user_id=user_id))
+            if new_items:
+                #temp storrage of the data
+                session['temp_new_items'] = new_items
+                session['answer_to_user'] = answer.get("answer_to_user")
+                return redirect(url_for("show_new_items", user_id=user_id))
+
     return redirect(url_for("show_new_items", user_id=user_id))
 
     flash(answer.get("answer_to_user", "Suche abgeschlossen!"))
@@ -102,7 +103,7 @@ def show_new_items(user_id):
     print("showing new items")
     # getting the needed data out of the session and also deleting them
     new_items = session.pop("temp_new_items", [])
-    answer_to_user = session.pop("answer_to_user")
+    answer_to_user = session.pop("answer_to_user","")
     print("new_items: ", new_items)
     print("type new_items: ", type(new_items))
     print(f"Zeige neue Items für User {user_id}: {new_items}")
